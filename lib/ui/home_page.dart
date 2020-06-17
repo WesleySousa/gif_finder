@@ -11,26 +11,24 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   String _search;
   int _offset = 0;
-  int _limit = 20;
+  int _limit = 19;
+
+  bool isSearchTreading() {
+    return _search == null || _search.isEmpty;
+  }
 
   Future<Map> _getGifs() async {
     http.Response response;
 
-    if (_search == null) {
+    if (isSearchTreading()) {
       response = await http.get(
-          'https://api.giphy.com/v1/gifs/trending?api_key=d5fAsBttcE6lg112pqtbJLq6VTpfdwGs&limit=$_limit&rating=G');
+          'https://api.giphy.com/v1/gifs/trending?api_key=d5fAsBttcE6lg112pqtbJLq6VTpfdwGs&limit=20&rating=G');
     } else {
       response = await http.get(
           'https://api.giphy.com/v1/gifs/search?api_key=d5fAsBttcE6lg112pqtbJLq6VTpfdwGs&q=$_search&limit=$_limit&offset=$_offset&rating=G&lang=pt');
     }
 
     return json.decode(response.body);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _getGifs().then((value) => print(value));
   }
 
   @override
@@ -59,7 +57,10 @@ class _HomePageState extends State<HomePage> {
                 color: Colors.white,
               ),
               onSubmitted: (text) {
-                setState(() => _search = text);
+                setState(() {
+                  _search = text;
+                  _offset = 0;
+                });
               },
             ),
           ),
@@ -94,6 +95,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _createGifGrid(BuildContext context, AsyncSnapshot snapshot) {
+    int quantityItemsGrid = snapshot.data['data'].length;
+    if (!isSearchTreading()) quantityItemsGrid += 1;
+
     return GridView.builder(
       padding: EdgeInsets.all(10.0),
       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -101,15 +105,44 @@ class _HomePageState extends State<HomePage> {
         crossAxisSpacing: 10.0,
         mainAxisSpacing: 10.0,
       ),
-      itemCount: snapshot.data['data'].length,
+      itemCount: quantityItemsGrid,
       itemBuilder: (context, index) {
-        return GestureDetector(
-          child: Image.network(
-            snapshot.data['data'][index]['images']['fixed_height']['url'],
-            height: 300.0,
-            fit: BoxFit.cover,
-          ),
-        );
+        if (isSearchTreading() || index < snapshot.data['data'].length) {
+          return GestureDetector(
+            child: Image.network(
+              snapshot.data['data'][index]['images']['fixed_height']['url'],
+              height: 300.0,
+              fit: BoxFit.cover,
+            ),
+          );
+        } else {
+          return GestureDetector(
+            child: Container(
+              padding: EdgeInsets.all(10.0),
+              width: 300.0,
+              height: 300.0,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  Icon(
+                    Icons.add,
+                    size: 60.0,
+                    color: Colors.white,
+                  ),
+                  Text(
+                    'Load more...',
+                    style: TextStyle(color: Colors.white, fontSize: 30.0),
+                  ),
+                ],
+              ),
+            ),
+            onTap: () {
+              setState(() {
+                _offset += _limit;
+              });
+            },
+          );
+        }
       },
     );
   }
