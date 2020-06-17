@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import './gif_page.dart';
 import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
@@ -114,6 +115,14 @@ class _HomePageState extends State<HomePage> {
               height: 300.0,
               fit: BoxFit.cover,
             ),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GifPage(snapshot.data['data'][index]),
+                ),
+              );
+            },
           );
         } else {
           return GestureDetector(
@@ -131,7 +140,7 @@ class _HomePageState extends State<HomePage> {
                   ),
                   Text(
                     'Load more...',
-                    style: TextStyle(color: Colors.white, fontSize: 30.0),
+                    style: TextStyle(color: Colors.white, fontSize: 20.0),
                   ),
                 ],
               ),
